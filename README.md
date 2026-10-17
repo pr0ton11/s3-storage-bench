@@ -7,19 +7,21 @@ The image packages [storage-bench](https://github.com/opencoredev/storage-bench)
 ## Run it
 
 ```sh
-docker build -t s3-storage-bench .
+docker pull ghcr.io/pr0ton11/s3-storage-bench
 ```
+
+The image runs on amd64 and arm64. To build it yourself, run `docker build -t ghcr.io/pr0ton11/s3-storage-bench .` in this repository.
 
 Copy `.env.example` to `.env`, fill in one endpoint, and run a short check:
 
 ```sh
-docker run --rm --env-file .env s3-storage-bench
+docker run --rm --env-file .env ghcr.io/pr0ton11/s3-storage-bench
 ```
 
 If the check passes, set `PROFILE=full` and run it again. A full pass against one endpoint takes 10 to 30 minutes. The results are in `/results` inside the container. Mount a directory there to keep them:
 
 ```sh
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/results:/results" --env-file .env s3-storage-bench
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/results:/results" --env-file .env ghcr.io/pr0ton11/s3-storage-bench
 ```
 
 Or set the `RESULTS_*` variables to upload them to a bucket.
@@ -32,7 +34,7 @@ With the [Exoscale CLI](https://github.com/exoscale/cli) signed in and `RESULTS_
 exoscale/run.sh ch-gva-2 de-fra-1 at-vie-1
 ```
 
-It starts one instance per zone, which builds the image from the pushed commit, runs the profile set in `.env`, uploads the results, and powers off. The script deletes each instance when it has stopped. The client name in the results is `exo-<zone>`.
+It starts one instance per zone, which pulls the image of the pushed commit (or builds it, when the image is not published yet), runs the profile set in `.env`, uploads the results, and powers off. The script deletes each instance when it has stopped. The client name in the results is `exo-<zone>`.
 
 `RESULTS_*` must be set, because the instance is deleted after the run. When the results endpoint is Exoscale object storage, `https://sos-<zone>.exo.io`, the script creates the bucket when it is missing and downloads the results of the run to `results/<stamp>/`. Use a key that may use object storage only for the results, because the instance holds it.
 
