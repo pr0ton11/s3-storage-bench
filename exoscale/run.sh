@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the benchmark from Exoscale zones, unattended. One instance per zone, deleted when its run has finished.
+# Runs the benchmark from Exoscale zones, one zone after the other. Each instance is deleted when its run has finished.
 #
 #   exoscale/run.sh <zone>...            for example: exoscale/run.sh ch-gva-2 de-fra-1 at-vie-1
 #
@@ -40,18 +40,15 @@ if [[ "$(setting RESULTS_ENDPOINT)" =~ ^https://sos-([a-z0-9-]+)\.exo\.io/?$ ]];
   download="sos://$bucket/$prefix/"
 fi
 
+# One zone at a time: the endpoint under test is shared, and two runners at once would measure each other.
 for zone in "${zones[@]}"; do
   name="bench-$zone-$stamp"
   sed -e "s|__ENV_B64__|$env_b64|" -e "s|__REF__|$ref|" -e "s|__CLIENT__|exo-$zone|" exoscale/cloud-init.yaml > "$tmp/$zone.yaml"
   exo compute instance create "$name" --zone "$zone" --instance-type "$type" --template "Linux Ubuntu 24.04 LTS 64-bit" \
     --disk-size 20 --cloud-init "$tmp/$zone.yaml" ${SSH_KEY:+--ssh-key "$SSH_KEY"} -Q
-  echo "$zone: started $name"
-done
-
-for zone in "${zones[@]}"; do
-  name="bench-$zone-$stamp"
+  echo "[$(date -u +%H:%M:%S)] $zone: started $name"
   until [ "$(exo compute instance show "$name" --zone "$zone" -O json | jq -r .state)" = stopped ]; do sleep 60; done
-  echo "$zone: finished"
+  echo "[$(date -u +%H:%M:%S)] $zone: finished"
   [ "${KEEP:-}" = 1 ] || exo compute instance delete "$name" --zone "$zone" -f -Q
 done
 
