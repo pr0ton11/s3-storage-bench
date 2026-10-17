@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # storage-bench by Leo (https://github.com/opencoredev/storage-bench, ISC), pinned to one commit, with a provider
 # file that reads any S3 endpoint from the environment. Change UPSTREAM_COMMIT and the two checksums together.
-ARG NODE_IMAGE=node:24-alpine
+ARG NODE_IMAGE=docker.io/library/node:24-alpine
 
 FROM ${NODE_IMAGE} AS build
 ARG UPSTREAM_COMMIT=ecfb096fdd04433ea6a8707c6ff0c07b59062287
@@ -20,12 +20,12 @@ RUN sed -i \
       -e 's/^const CONCURRENCY = 16;/const CONCURRENCY = Number(process.env.CONCURRENCY ?? 16);/' \
       -e 's/^const BURST = 32;/const BURST = Number(process.env.BURST ?? 32);/' src/bench.ts \
     && [ "$(grep -c 'process.env.CONCURRENCY\|process.env.BURST' src/bench.ts)" = 2 ]
-COPY src/providers.ts src/upload.ts src/
+COPY src/providers.ts src/upload.ts src/network.ts src/
 COPY run.sh ./
 RUN chmod 644 src/*.ts package.json package-lock.json && chmod 755 run.sh
 
 # The runtime image is Alpine plus the Node binary. No npm, no headers, no build tools.
-FROM alpine:3.22
+FROM docker.io/library/alpine:3.22
 ARG UPSTREAM_COMMIT=ecfb096fdd04433ea6a8707c6ff0c07b59062287
 ENV UPSTREAM_COMMIT=$UPSTREAM_COMMIT
 ENV NODE_ENV=production

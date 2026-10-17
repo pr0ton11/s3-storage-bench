@@ -15,6 +15,8 @@ PASSES=${PASSES:-1}
 OUT=${OUT:-/results}
 mkdir -p "$OUT/raw"
 
+node src/network.ts --out "$OUT/network.json"
+
 pass=1
 while [ "$pass" -le "$PASSES" ]; do
   echo "[$(date -u +%H:%M:%S)] pass $pass of $PASSES, profile $PROFILE, client $CLIENT" >&2
