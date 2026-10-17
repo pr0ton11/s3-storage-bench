@@ -6,7 +6,8 @@
 # Reads .env in the repository root. RESULTS_* must be set, because the instance is deleted after the run.
 # When RESULTS_ENDPOINT is Exoscale object storage (https://sos-<zone>.exo.io), the script creates the bucket
 # when it is missing and downloads the results of this run to results/<stamp>/ at the end.
-# The instance builds the image from the commit that is checked out here, so push it first.
+# The instance pulls the image of the commit that is checked out here, or builds it from GitHub when the image is
+# not published yet, so push it first.
 #   INSTANCE_TYPE   default standard.medium
 #   SSH_KEY         name of an Exoscale SSH key to install, for a look at /opt/bench/run.log
 #   KEEP=1          keep the instances after the run
