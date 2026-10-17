@@ -5,6 +5,7 @@
 #   PROFILE    smoke (a short connectivity check, not reported) or full, default: smoke
 #   PASSES     how many full passes to run, default: 1
 #   PROVIDERS  comma-separated target ids to run, default: every configured target
+#   CONCURRENCY, BURST  parallel uploads of the two concurrency tests, default 16 and 32 as upstream
 #   TARGET_*   the endpoints to measure, see src/providers.ts
 #   RESULTS_*  where to upload the results, see src/upload.ts
 set -eu

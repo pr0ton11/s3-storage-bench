@@ -15,6 +15,11 @@ ADD https://raw.githubusercontent.com/opencoredev/storage-bench/${UPSTREAM_COMMI
 RUN printf '%s  src/bench.ts\n%s  src/report.ts\n' \
       dddccf9cf33a812cc5bccc8add833496401501185ad53c9b6794541ad4e0eb27 \
       c4c6d98ed75eb283e23ba7348c1b1aaec1eca4e80e3831c102d920a9b7a31020 | sha256sum -c -
+# The only change to upstream code: the two burst sizes become environment variables with upstream's defaults.
+RUN sed -i \
+      -e 's/^const CONCURRENCY = 16;/const CONCURRENCY = Number(process.env.CONCURRENCY ?? 16);/' \
+      -e 's/^const BURST = 32;/const BURST = Number(process.env.BURST ?? 32);/' src/bench.ts \
+    && [ "$(grep -c 'process.env.CONCURRENCY\|process.env.BURST' src/bench.ts)" = 2 ]
 COPY src/providers.ts src/upload.ts src/
 COPY run.sh ./
 RUN chmod 644 src/*.ts package.json package-lock.json && chmod 755 run.sh

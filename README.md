@@ -52,6 +52,7 @@ One block of `TARGET_<NAME>_*` variables describes one endpoint. The name become
 | `CLIENT` | no | The name of the machine in the results. The default is the hostname. |
 | `PROFILE` | no | `smoke` for a short check or `full` for a measurement. The default is `smoke`. |
 | `PASSES` | no | How many passes to run. The default is `1`. |
+| `CONCURRENCY`, `BURST` | no | Parallel uploads in the concurrency test and in the burst test. The defaults are `16` and `32`, as upstream. Lower them for an endpoint behind a network that filters bursts of new connections. The row labels follow the values. |
 | `PROVIDERS` | no | A comma-separated list of provider ids. The default is every configured endpoint. |
 | `RESULTS_ENDPOINT`, `RESULTS_BUCKET`, `RESULTS_ACCESS_KEY_ID`, `RESULTS_SECRET_ACCESS_KEY` | no | Where to upload the results. If `RESULTS_ENDPOINT` is empty, nothing is uploaded. |
 | `RESULTS_REGION`, `RESULTS_PREFIX`, `RESULTS_PATH_STYLE` | no | As above, for the results bucket. The default prefix is `results`. |
@@ -66,7 +67,7 @@ The benchmark writes its own objects to the bucket and deletes them. Each run ca
 
 ## How the image is built
 
-The Dockerfile downloads `src/bench.ts` and `src/report.ts` of storage-bench at one pinned commit and verifies their checksums. `src/providers.ts` is replaced by a file that reads endpoints from the environment instead of ten hosted providers. The method, the operations, the sizes, and the profiles are unchanged. To move to a newer upstream commit, change `UPSTREAM_COMMIT` and the two checksums in the Dockerfile together.
+The Dockerfile downloads `src/bench.ts` and `src/report.ts` of storage-bench at one pinned commit and verifies their checksums. `src/providers.ts` is replaced by a file that reads endpoints from the environment instead of ten hosted providers. The two burst sizes become the environment variables `CONCURRENCY` and `BURST` with upstream's defaults. The method, the operations, the sizes, and the profiles are otherwise unchanged. To move to a newer upstream commit, change `UPSTREAM_COMMIT` and the two checksums in the Dockerfile together.
 
 storage-bench is published under the ISC license, as declared in its `package.json`.
 
