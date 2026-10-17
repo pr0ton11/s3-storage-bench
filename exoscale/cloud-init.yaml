@@ -1,0 +1,22 @@
+#cloud-config
+# Rendered by exoscale/run.sh: builds the image from this repository, runs one benchmark, and powers off.
+package_update: true
+packages:
+  - docker.io
+  - git
+write_files:
+  - path: /opt/bench/.env
+    permissions: "0600"
+    encoding: b64
+    content: __ENV_B64__
+runcmd:
+  - mkdir -p /opt/bench/src
+  - git -C /opt/bench/src init -q
+  - git -C /opt/bench/src fetch -q --depth 1 https://github.com/pr0ton11/s3-storage-bench __REF__
+  - git -C /opt/bench/src checkout -q FETCH_HEAD
+  - docker build -q -t s3-storage-bench /opt/bench/src
+  - docker run --rm --env-file /opt/bench/.env -e CLIENT=__CLIENT__ s3-storage-bench > /opt/bench/run.log 2>&1
+  - shred -u /opt/bench/.env
+power_state:
+  mode: poweroff
+  condition: true

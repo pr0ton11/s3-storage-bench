@@ -24,6 +24,16 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/results:/results" --env-file
 
 Or set the `RESULTS_*` variables to upload them to a bucket.
 
+## Run it from Exoscale
+
+With the [Exoscale CLI](https://github.com/exoscale/cli) signed in and `RESULTS_*` set in `.env`:
+
+```sh
+exoscale/run.sh ch-gva-2 de-fra-1 at-vie-1
+```
+
+It starts one instance per zone, which builds the image from the pushed commit, runs the profile set in `.env`, uploads the results, and powers off. The script deletes each instance when it has stopped. The client name in the results is `exo-<zone>`.
+
 ## Configuration
 
 One block of `TARGET_<NAME>_*` variables describes one endpoint. The name becomes the provider id in the results, in lower case. Several endpoints run interleaved in one pass.
