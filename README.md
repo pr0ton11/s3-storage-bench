@@ -1,14 +1,10 @@
 # s3-storage-bench
 
-Measure the latency and the throughput of an S3 endpoint from the place where your application runs.
+Measure the latency and the throughput of any S3 endpoint from the place where your application runs.
 
-This repository packages [storage-bench](https://github.com/opencoredev/storage-bench) by Leo ([@leodev](https://x.com/leodev)) as a Docker image. storage-bench runs the operations that applications do: upload, download, head, list, copy, delete, range get, and signed URL. It reports the median, the p95, and the p99 for each operation and each object size.
-
-The image works with any S3 endpoint, hosted or in your own rack. A cloud-init file and a script for Exoscale follow in the next commits.
+The image packages [storage-bench](https://github.com/opencoredev/storage-bench) by Leo ([@leodev](https://x.com/leodev)). It runs the operations that applications do: upload, download, head, list, copy, delete, range get, and signed URL. It reports the median, the p95, and the p99 for each operation and each object size.
 
 ## Run it
-
-Build the image:
 
 ```sh
 docker build -t s3-storage-bench .
@@ -20,18 +16,17 @@ Copy `.env.example` to `.env`, fill in one endpoint, and run a short check:
 docker run --rm --env-file .env s3-storage-bench
 ```
 
-If the check passes, set `PROFILE=full` in `.env` and run it again. A full pass against one endpoint takes 10 to 30 minutes. The results are in `/results` inside the container. Mount a directory there to keep them, and run as your own user so that the container can write to it:
+If the check passes, set `PROFILE=full` and run it again. A full pass against one endpoint takes 10 to 30 minutes. The results are in `/results` inside the container. Mount a directory there to keep them:
 
 ```sh
-mkdir -p results
 docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/results:/results" --env-file .env s3-storage-bench
 ```
 
-If your Docker setup maps the mount to root, use a named volume (`-v results:/results`) instead and copy the files out with `docker cp`. Or set the `RESULTS_*` variables to upload the results to a bucket. Then no mount is needed.
+Or set the `RESULTS_*` variables to upload them to a bucket.
 
 ## Configuration
 
-Every setting is an environment variable. One block of `TARGET_<NAME>_*` variables describes one endpoint. The name becomes the provider id in the results, in lower case. You can configure several endpoints, and the benchmark interleaves them in one run.
+One block of `TARGET_<NAME>_*` variables describes one endpoint. The name becomes the provider id in the results, in lower case. Several endpoints run interleaved in one pass.
 
 | Variable | Required | Meaning |
 |---|---|---|
@@ -51,21 +46,17 @@ Every setting is an environment variable. One block of `TARGET_<NAME>_*` variabl
 
 ## Results
 
-Each pass writes one `raw/<run id>.jsonl` file with every sample and one `raw/<run id>.meta.json` file with the run. After the last pass, `RESULTS.md` and `summary.json` hold one table per client. A smoke run writes samples but no table, because storage-bench counts only full runs.
+Each pass writes `raw/<run id>.jsonl` with every sample and `raw/<run id>.meta.json` with the run. After the last pass, `RESULTS.md` and `summary.json` hold one table per client. A smoke run writes samples but no table, because storage-bench reports only full runs.
 
 Uploaded results are stored as `<prefix>/<client>/<path>` in the results bucket.
 
-The benchmark uses the bucket for its own objects and deletes them. Each run calls `ipinfo.io` once to record the region and the network of the client in the metadata. Set `TARGET_<NAME>_REGION` and the other values to match your endpoint, and do not point the benchmark at a bucket with data that you need.
+The benchmark writes its own objects to the bucket and deletes them. Each run calls `ipinfo.io` once to record the region and the network of the client.
 
 ## How the image is built
 
-The Dockerfile downloads `src/bench.ts` and `src/report.ts` of storage-bench at one pinned commit and verifies their checksums. `src/providers.ts` is replaced by a file that reads endpoints from the environment. The upstream file knows ten hosted providers, and this one knows any S3 endpoint. The method, the operations, the sizes, and the profiles are unchanged. To move to a newer upstream commit, change `UPSTREAM_COMMIT` and the two checksums in the Dockerfile together.
+The Dockerfile downloads `src/bench.ts` and `src/report.ts` of storage-bench at one pinned commit and verifies their checksums. `src/providers.ts` is replaced by a file that reads endpoints from the environment instead of ten hosted providers. The method, the operations, the sizes, and the profiles are unchanged. To move to a newer upstream commit, change `UPSTREAM_COMMIT` and the two checksums in the Dockerfile together.
 
-The runtime image is Alpine with the Node 24 binary and the production dependencies. It has no npm and no shell tools beyond BusyBox.
-
-## Credits
-
-storage-bench is the work of Leo ([@leodev](https://x.com/leodev)). It is published under the ISC license, as declared in its `package.json`.
+storage-bench is published under the ISC license, as declared in its `package.json`.
 
 ## License
 
