@@ -34,6 +34,8 @@ exoscale/run.sh ch-gva-2 de-fra-1 at-vie-1
 
 It starts one instance per zone, which builds the image from the pushed commit, runs the profile set in `.env`, uploads the results, and powers off. The script deletes each instance when it has stopped. The client name in the results is `exo-<zone>`.
 
+`RESULTS_*` must be set, because the instance is deleted after the run. When the results endpoint is Exoscale object storage, `https://sos-<zone>.exo.io`, the script creates the bucket when it is missing and downloads the results of the run to `results/<stamp>/`. Use a key that may use object storage only for the results, because the instance holds it.
+
 ## Configuration
 
 One block of `TARGET_<NAME>_*` variables describes one endpoint. The name becomes the provider id in the results, in lower case. Several endpoints run interleaved in one pass.

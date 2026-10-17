@@ -4,6 +4,8 @@
 #   exoscale/run.sh <zone>...            for example: exoscale/run.sh ch-gva-2 de-fra-1 at-vie-1
 #
 # Reads .env in the repository root. RESULTS_* must be set, because the instance is deleted after the run.
+# When RESULTS_ENDPOINT is Exoscale object storage (https://sos-<zone>.exo.io), the script creates the bucket
+# when it is missing and downloads the results of this run to results/<stamp>/ at the end.
 # The instance builds the image from the commit that is checked out here, so push it first.
 #   INSTANCE_TYPE   default standard.medium
 #   SSH_KEY         name of an Exoscale SSH key to install, for a look at /opt/bench/run.log
@@ -21,9 +23,22 @@ git branch -r --contains "$ref" | grep -q . || { echo "commit $ref is not pushed
 
 type=${INSTANCE_TYPE:-standard.medium}
 stamp=$(date -u +%Y%m%d-%H%M)
-env_b64=$(base64 < .env | tr -d '\n')
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+
+# Each run gets its own prefix in the results bucket, so the download at the end fetches only this run.
+setting() { sed -n "s/^$1=//p" .env | tail -1; }
+prefix="$(setting RESULTS_PREFIX)"
+prefix="${prefix:-results}/$stamp"
+{ grep -v '^RESULTS_PREFIX=' .env; echo "RESULTS_PREFIX=$prefix"; } > "$tmp/env"
+env_b64=$(base64 < "$tmp/env" | tr -d '\n')
+
+download=
+if [[ "$(setting RESULTS_ENDPOINT)" =~ ^https://sos-([a-z0-9-]+)\.exo\.io/?$ ]]; then
+  bucket=$(setting RESULTS_BUCKET)
+  exo storage ls "sos://$bucket" >/dev/null 2>&1 || exo storage mb "sos://$bucket" --zone "${BASH_REMATCH[1]}" -Q
+  download="sos://$bucket/$prefix/"
+fi
 
 for zone in "${zones[@]}"; do
   name="bench-$zone-$stamp"
@@ -39,3 +54,9 @@ for zone in "${zones[@]}"; do
   echo "$zone: finished"
   [ "${KEEP:-}" = 1 ] || exo compute instance delete "$name" --zone "$zone" -f -Q
 done
+
+if [ -n "$download" ]; then
+  mkdir -p "results/$stamp"
+  exo storage download -r "$download" "results/$stamp/" -Q
+  echo "results in results/$stamp/"
+fi
