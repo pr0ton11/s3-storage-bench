@@ -65,7 +65,7 @@ Each pass writes `raw/<run id>.jsonl` with every sample and `raw/<run id>.meta.j
 
 Uploaded results are stored as `<prefix>/<client>/<path>` in the results bucket.
 
-Before the passes, `network.json` records the network round trip to each endpoint: the time of a TCP handshake, 30 times, as minimum, median, and p95. Subtract it from a small read to see what the service adds on top of the network.
+Before the passes, `network.json` records the network round trip to each endpoint in `PROVIDERS`: the time of a TCP handshake, 30 times, as minimum, median, and p95. A handshake that fails counts as failed and does not stop the run. Subtract it from a small read to see what the service adds on top of the network.
 
 The benchmark writes its own objects to the bucket and deletes them. Each run calls `ipinfo.io` once to record the region and the network of the client.
 
